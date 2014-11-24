@@ -13,10 +13,21 @@
 #include "lib/uart.h"
 #include "lib/onewire.h"
 #include "lib/ds18x20.h"
+#include "lib/doorlight.h"
+
+// this is something I wanted to do in code for a long time, but at work it seemed ill-advised to do so:
+// PENIS PENIS PENIS PENIS PENIS PENIS
+
+char dc_buffer[10];
+uint16_t temp_values[2];
+
+#define TEMP_DELAY 20000;
+volatile uint16_t temp_counter = 0;
+volatile uint8_t temp_do_measure = 1;
+
+uint8_t door_status = 255;
 
 char buffer[64];
-char dc_buffer[10];
-uint16_t temps[2];
 
 void init_comm() {
 	uart_init(UART_BAUD_SELECT(9600, F_CPU));
@@ -45,7 +56,13 @@ void init_main_loop() {
 }
 
 ISR(TIMER0_COMPA_vect) {
-	refresh_display();
+	display_refresh();
+
+	// enable the fucking temeperature sensor every TEMP_DELAY interrupts, i.e. every TEMP_DELAY/4000 seconds
+	if(temp_counter-- == 0) {
+		temp_do_measure = 1;
+		temp_counter = TEMP_DELAY;
+	}
 }
 
 uint8_t gSensorIDs[2][8] = { { 0x10, 0xA1, 0x3E, 0xE8, 0x02, 0x08, 0x00, 0xDA },
@@ -54,6 +71,7 @@ uint8_t gSensorIDs[2][8] = { { 0x10, 0xA1, 0x3E, 0xE8, 0x02, 0x08, 0x00, 0xDA },
 int main(void) {
 	init_display();
 	init_comm();
+	init_doorlight();
 	init_main_loop();
 
 	int16_t decicelsius;
@@ -63,37 +81,40 @@ int main(void) {
 #endif
 
 	while (1) {
-//		sprintf(buffer, "Fuck.");
-//		uart_puts(buffer);
 
-//		display_values(0,1,2,3);
-
-		if (DS18X20_start_meas( DS18X20_POWER_EXTERN, NULL) == DS18X20_OK) {
-			_delay_ms( DS18B20_TCONV_12BIT);
-			for (int i = 0; i < 2; i++) {
-				if (DS18X20_read_decicelsius(&gSensorIDs[i][0],&decicelsius) == DS18X20_OK) {
-					temps[i] = decicelsius;
-				} else {
-					sprintf(buffer, "Sensor #%d FAILED\r\n", i);
-					uart_puts(buffer);
-					temps[i] = 0;
+		if(temp_do_measure) {
+			if (DS18X20_start_meas( DS18X20_POWER_EXTERN, NULL) == DS18X20_OK) {
+				_delay_ms( DS18B20_TCONV_12BIT);
+				for (int i = 0; i < 2; i++) {
+					if (DS18X20_read_decicelsius(&gSensorIDs[i][0],&decicelsius) == DS18X20_OK) {
+						temp_values[i] = decicelsius;
+					} else {
+						temp_values[i] = 0;
+					}
 				}
 			}
+			else {
+				uart_puts("Le Fuck.\r\n");
+			}
+
+			DS18X20_format_from_decicelsius( temp_values[0], dc_buffer, 10 );
+			sprintf(buffer, "Sensor #%d=%s  ", 0, dc_buffer);
+			uart_puts(buffer);
+			DS18X20_format_from_decicelsius( temp_values[1], dc_buffer, 10 );
+			sprintf(buffer, "Sensor #%d=%s\r\n", 1, dc_buffer);
+			uart_puts(buffer);
+
+			display_values(temp_values[0] / 10, (temp_values[0] % 10) * 10, temp_values[1] / 10, (temp_values[1] % 10) * 10);
+			temp_do_measure = 0;
 		}
-		else {
-			uart_puts("Le Fuck.\r\n");
+
+		if(door_status != dl_door_closed()) {
+			door_status = dl_door_closed();
+			dl_set_light_status(door_status ? 0 : 1);
+
+			sprintf(buffer, "Door status: %s\r\n", dl_door_closed() ? "closed" : "open");
+			uart_puts(buffer);
 		}
-
-		DS18X20_format_from_decicelsius( temps[0], dc_buffer, 10 );
-		sprintf(buffer, "Sensor #%d=%s (%d)\r\n", 0, dc_buffer, temps[0]);
-		uart_puts(buffer);
-		DS18X20_format_from_decicelsius( temps[1], dc_buffer, 10 );
-		sprintf(buffer, "Sensor #%d=%s (%d)\r\n\r\n", 1, dc_buffer, temps[1]);
-		uart_puts(buffer);
-
-
-		display_values(temps[0] / 10, (temps[0] % 10) * 10, temps[1] / 10, (temps[1] % 10) * 10);
-		_delay_ms(10000);
 	}
 	return 0;
 }

@@ -43,7 +43,7 @@ void set_digits(uint8_t number, uint8_t offset) {
 	numbers[offset+1] = number % 10;
 }
 
-void refresh_display() {
+void display_refresh() {
 	static uint8_t digit = 1;
 
 	uint8_t symbol = chars[numbers[digit++]];

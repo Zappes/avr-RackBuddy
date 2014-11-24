@@ -23,6 +23,6 @@
 
 void init_display();
 void display_values(uint8_t hi_cur, uint8_t hi_avg, uint8_t lo_cur, uint8_t lo_avg);
-void refresh_display();
+void display_refresh();
 
 #endif /* DISPLAY_H_ */
