@@ -1,7 +1,7 @@
 [Eagle]
-Version="07 01 00"
+Version="07 02 00"
 Platform="Linux"
-Serial="62191E841E-LSR-WLM-1EL"
+Serial="722FEF0B46-LSR-WLM-1SS"
 Globals="Globals"
 Desktop="Desktop"
 
@@ -351,11 +351,14 @@ UsedLibrary="/home/zaphod/Development/Tools/Eagle-Addon/buzzer.lbr"
 UsedLibrary="/home/zaphod/Development/Tools/Eagle-Addon/TOF5462.lbr"
 UsedLibrary="/home/zaphod/Development/Tools/Eagle-Addon/zlalanne.lbr"
 UsedLibrary="/home/zaphod/Development/Tools/Eagle-Addon/_hhn_attiny25_45_85.lbr"
-UsedLibrary="/opt/eagle-7.1.0/lbr/Zappes/USB-Breakouts.lbr"
+UsedLibrary="/opt/eagle-7.1.0/lbr/Zappes/Zap-USB-Breakouts.lbr"
+UsedLibrary="/opt/eagle-7.1.0/lbr/Zappes/Zap-Verbogene Teile.lbr"
+UsedLibrary="/home/zaphod/Development/Tools/Eagle-Addon/Molex_By_element14_Batch_1.lbr"
+UsedLibrary="/home/zaphod/Development/Tools/Eagle-Addon/molex-kk.lbr"
 
 [Win_1]
 Type="Control Panel"
-Loc="3200 289 3938 975"
+Loc="1924 199 2523 598"
 State=2
 Number=0
 
